@@ -52,15 +52,28 @@ def run_iga_pipeline(args,anatomy_solid,anatomy_transp):
     transp_idx = anatomy_transp.points
     transp_idx = np.rint(transp_idx/args['scale']).astype('int') # Redundant
 
-    # Plotter(args,anatomy_solid,anatomy_transp,None,None,None)
+    if args['plot_ps']:
+        # Read file
+        fi = open(args['ps_file'],'r')
+        rows = fi.readlines()
 
+        # parse file accordingly
+        header = rows[0]
+        ps_array = np.asarray([row.split('\n')[0].split(' ') for row in rows[1:]]).astype(float)
+        ps_array = ps_array[:,:-1]
+        ps_array[:,1:] = ps_array[:,1:]*args['scale']
+    else:
+        ps_array = None
+        
+
+    # Plotter(args,anatomy_solid,anatomy_transp,ps_array,None,None)
     with mp.Manager() as DataManager:
         DataQueue = DataManager.Queue(maxsize=5) #maxsize=15
         
         #Data In
         DataReader = mp.Process(target = Reader,args = (args,solid_idx,transp_idx,DataQueue,))
         # Plotting
-        PlottingPool = mp.Pool(args['n_processes'],Plotter,(args,anatomy_solid,anatomy_transp,None,None,DataQueue,)) #PSpos, BTPos
+        PlottingPool = mp.Pool(args['n_processes'],Plotter,(args,anatomy_solid,anatomy_transp,ps_array,None,DataQueue,)) #PSpos, BTPos
 
         # Open and wait for end 
         DataReader.start()

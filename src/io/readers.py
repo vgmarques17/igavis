@@ -19,7 +19,7 @@ def read_anatomy(args,anatomy_file,layer='solid'):
         if layer == 'solid':
             valid_cells = args['solid_val']
         elif layer == 'transparent':
-            valid_cells = args['transparent_val']
+            valid_cells = args['transp_val']
         else:
             RuntimeError('Invalid layer name')
             
@@ -45,11 +45,6 @@ def read_anatomy(args,anatomy_file,layer='solid'):
         vtk_grid = vtk_grid.extract_cells(np.isin(vtk_grid.cell_data[tag_name],valid_cells),pass_cell_ids=True, pass_point_ids=True)
         
         return vtk_grid
-
-
-
-
-
 
 class IGBUnstructuredGrid:
     "Simple wrapper around IGB file to convert it to unstructured grid"
@@ -164,7 +159,6 @@ class IGBUnstructuredGrid:
         grid.SetCells(vtk.VTK_HEXAHEDRON,cells)
 
         return grid
-
 
 def load_camera_preset(config_file: str, preset: str):
     """

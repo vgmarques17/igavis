@@ -2,7 +2,7 @@
 import time
 from datetime import datetime
 import os,sys
-from src.cli.argument_parser import parse_arguments
+from config.argument_parser import parse_arguments
 from src.io.readers import read_anatomy
 from src.core.iga_pipeline import run_iga_pipeline
 from src.core.igb_pipeline import run_igb_pipeline

@@ -3,8 +3,10 @@ import numpy as np
 from src.io.readers import load_camera_preset
 from src.core.vtkobjects import SmoothFilters
 import pyvista as pv
+pv.global_theme.allow_empty_mesh = True
 
-def Plotter(args,anatomy_solid,anatomy_transp,PSpos,BTpos,DataQueue):
+
+def Plotter(args,anatomy_solid,anatomy_transp,ps_array,BTpos,DataQueue):
     print('Worker Initialized')
 
     # Initialize array for solid and transparent layers
@@ -73,19 +75,8 @@ def Plotter(args,anatomy_solid,anatomy_transp,PSpos,BTpos,DataQueue):
     # plotter.show()
 
 
-    # if args.plot_ps:
-    #     if args.t_start in PSpos.keys():
-    #         PSActor,PSData = MakePSActors(np.asarray(PSpos[args.t_start]),args)
-    #     else:
-    #         PSActor,PSData = MakePSActors(np.empty((0,3)),args) # This creates the actors but without points, I think
-    #     # Add PS actor
-    #     PosRen.AddActor(PSActor)
-    #     AntRen.AddActor(PSActor)
-    #     if args.plot_rv: RenRV.AddActor(PSActor)
-    #     #Update
-    #     PosRen.Modified()
-    #     AntRen.Modified()     
-    #     if args.plot_rv: RenRV.Modified()
+    if args['plot_ps']:
+        plotter,actors_to_remove = update_ps_plot(args,args['t_start'],ps_array,layout,plotter)
 
     # if args.plot_bt:
     #     if args.t_start in BTpos.keys():
@@ -120,9 +111,13 @@ def Plotter(args,anatomy_solid,anatomy_transp,PSpos,BTpos,DataQueue):
             else:
                 anatomy_solid["vmf"] = solid_vals
                 anatomy_transp["vmf"] = transp_vals
+
             # ---- UPDATE TEXT ----
             plotter.remove_actor(text_actor)
             text_actor = plotter.add_text(f"{t_step:04d} ms", font_size=14)
+            # ---- UPDATE PS Array ----
+            if args['plot_ps']:
+                plotter,actors_to_remove = update_ps_plot(args,t_step,ps_array,layout,plotter,actors_to_remove = actors_to_remove)
 
             # ---- TRIGGER RENDER ----
             plotter.render()
@@ -132,69 +127,29 @@ def Plotter(args,anatomy_solid,anatomy_transp,PSpos,BTpos,DataQueue):
                 f"{args['output_path']}/{args['basename']}{t_step:05d}.png"
             )
 
-    # Missing: Right view, PS, BT
+
+def update_ps_plot(args,t,ps_array,layout,plotter,actors_to_remove=None):
+    # If there were actors before, remove them to update the points
+    # Note: "actors" here are just pv instances added to the plotter
+    if actors_to_remove is not None:
+        for actor in actors_to_remove: plotter.remove_actor(actor)
 
 
-    # # # Listening
-    # while True:           
-    #     QOut = DataQueue.get(True)
-    #     message,data = QOut
-    #     if message=='kill': 
-    #         print('Worker killed') # can be passed to logger to save 
-    #         break
-    #     elif message=='data':
-    #         t,solid_vals,transp_vals = data
-    #         tStep = args.t_start+t*args.t_int
-    #         # Put stuff in arrays
-    #         vdataEndo.SetVoidArray(solid_vals, len(solid_vals), 1)
-    #         EndoObject.GetPointData().SetScalars(vdataEndo)
-    #         #
-    #         vdataEpi.SetVoidArray(transp_vals, len(transp_vals), 1)
-    #         EpiObject.GetPointData().SetScalars(vdataEpi)
-    #         #
-    #         TextActor.SetInput('%04d ms'%(tStep))
-    #         TextActor.Modified()
-    #         ## Endo
-    #         EndoObject.GetPointData().Modified()
-    #         EndoFiltered.Update()
-    #         DataMapperEndo.Update()
-    #         ## Epi
-    #         EpiObject.GetPointData().Modified()				
-    #         EpiFiltered.Update()
-    #         DataMapperEpi.Update()
+    if t in ps_array[:,0]:
+        ps_points = pv.PolyData(ps_array[np.where(ps_array[:,0]==t)[0],1:])
+    else:
+        ps_points = pv.PolyData(np.empty((0,3)))
+    
+    # Add PS to plotters
+    mesh_ps_1 = plotter.add_mesh(ps_points , opacity=1.0,colormap=args['sphere_color'],render_points_as_spheres=True,point_size=args['sphere_radius']) 
+    actors = [mesh_ps_1]
+    if layout != (1, 1):
+        plotter.subplot(layout[0]-1, layout[1]-1)
+        mesh_ps_2 = plotter.add_mesh(ps_points , opacity=1.0,colormap=args['sphere_color'],render_points_as_spheres=True,point_size=args['sphere_radius']) 
+        plotter.subplot(0, 0)
+        actors = actors + [mesh_ps_2]
 
-    #         if args.plot_ps: 
-    #             if tStep in PSpos.keys():
-    #                 UpdatePSData(args,PSData,np.asarray(PSpos[tStep]))
-    #             else:
-    #                 UpdatePSData(args,PSData,np.empty((0,3)))
+    return plotter,actors
 
-    #         if args.plot_bt:
-    #             btList = np.empty((0,3),float)
-    #             for btTime in range(tStep-args.t_int,tStep+1):
-    #                 if btTime in BTpos.keys():
-    #                     btList = np.vstack([btList,np.array(BTpos[btTime])])
-    #             btList = np.array(btList)
-    #             UpdateBTData(args,BTGlyph,btList)
-    #         # If defining a new angle is needed
-    #         # renWin.SetOffScreenRendering(False)
-    #         # interactor = vtk.vtkRenderWindowInteractor()
-    #         # interactor.SetRenderWindow(renWin)
-    #         # renWin.Render()
-    #         # interactor.Start()
-    #         # print(PosRen.GetActiveCamera().GetPosition())
-    #         # print(PosRen.GetActiveCamera().GetFocalPoint())
-    #         # print(PosRen.GetActiveCamera().GetViewUp())
-    #         # print(PosRen.GetActiveCamera().Zoom())
+    # Missing: Right view, BT
 
-    #         MakeScreenshot(renWin,args.vm_file.split('.iga.gz')[0]+'%04d'%(t+args.initial_stamp),fpath =args.output_path)
-
-    #         if args.plot_rv:
-    #             TextActorRV.SetInput('%04d ms'%(tStep))
-    #             TextActorRV.Modified()
-    #             ## Endo
-    #             DataMapperEndoRV.Update()
-    #             ## Epi
-    #             DataMapperEpiRV.Update()
-
-    #             MakeScreenshot(renWinRV,args.vm_file.split('.iga.gz')[0]+'RV%04d'%(t+args.initial_stamp),fpath =args.output_path)

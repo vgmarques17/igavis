@@ -124,13 +124,39 @@ def run_igb_pipeline(args, anatomy_solid, anatomy_transp):
     solid_idx = anatomy_solid.point_data['vtkOriginalPointIds']
     transp_idx = anatomy_transp.point_data['vtkOriginalPointIds']
 
+    if args['plot_ps']:
+        # Read file
+        with open(args['ps_file'],'r') as fi:
+            rows = fi.readlines()
+            rows = rows[2:]
+
+        data = []
+        new_tstep=False
+        for row in rows:
+            if new_tstep:
+                new_tstep=False
+                continue
+            
+            if row.startswith('#'):
+                # That is a timestep
+                t = row.split('#')[-1].split()[0]
+                t = float(t)
+                new_tstep=True
+                continue
+            else:
+                x,y,z = row.split('#')[0].split()
+                data.append([t,x,y,z])
+        ps_array = np.asarray(data,float)
+    else:
+        ps_array = None
+
     with mp.Manager() as DataManager:
         DataQueue = DataManager.Queue(maxsize=5)
         
         # Data In
         DataReader = mp.Process(target=Reader, args=(args,solid_idx,transp_idx, DataQueue,))
         # Plotting
-        PlottingPool = mp.Pool(args['n_processes'], Plotter, (args, anatomy_solid, anatomy_transp, None, None, DataQueue,))
+        PlottingPool = mp.Pool(args['n_processes'], Plotter, (args, anatomy_solid, anatomy_transp, ps_array, None, DataQueue,))
 
         # Open and wait for end 
         DataReader.start()

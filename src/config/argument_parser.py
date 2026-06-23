@@ -11,7 +11,7 @@ def parse_arguments():
     # Create argument groups
     file_group = parser.add_argument_group('File I/O')
     mesh_group = parser.add_argument_group('Mesh params')
-    # ps_group = parser.add_argument_group('Phase singularity plotting')
+    ps_group = parser.add_argument_group('Phase singularity plotting')
     # bt_group = parser.add_argument_group('Breakthrough plotting')
     timing_group = parser.add_argument_group('Timing parameters')
     display_group = parser.add_argument_group('Camera parameters')
@@ -72,15 +72,18 @@ def parse_arguments():
                             action='store',default = '%s/anims'%(os.getcwd()),type=str,
                             help = 'Path to the output folder. Default \'./anims\'')
     # # ------------------------------------------------------------------------------
-    # ## PS related (currently only igb/iga)
-    # ps_group.add_argument('--plot-ps',action='store_true',
-    #                       help = 'Whether to plot the PS\'s')
-    # ps_group.add_argument('--ps-file',type=str,
-    #                       action='store',default = '',
-    #                       help = 'Name of the file containing the PS data (with extension, should be a text file).')
-    # ps_group.add_argument('--sphere_radius',type=float,
-    #                       action='store',default = 10,
-    #                       help = 'Radius of the PS spheres')
+    ## PS related (currently only igb/iga)
+    ps_group.add_argument('--plot-ps',action='store_true',
+                          help = 'Whether to plot the PS\'s')
+    ps_group.add_argument('--ps-file',type=str,
+                          action='store',default = '',
+                          help = 'Name of the text file containing the PS data (for igb meshes should be .txt, for vtk meshes, .pts_t).')
+    ps_group.add_argument('--sphere-radius',type=float,
+                          action='store',default = 10,
+                          help = 'Radius of the PS spheres')
+    ps_group.add_argument('--sphere-color',type=str,
+                          action='store',default = '#00ffff',
+                          help = 'Hexadecimal or matplotlib value for PS sphere color. Default: #00ffff ')
     # # ------------------------------------------------------------------------------
     # ## BT related
     # bt_group.add_argument('--plot-bt',action='store_true',
@@ -103,6 +106,4 @@ def parse_arguments():
     
                     
     args = parser.parse_args()
-    # args.cameraTypePos,args.cameraTypeAnt,args.CameraTypeRight = MakeCameraDicts(args)
-    # Run function
     return args
