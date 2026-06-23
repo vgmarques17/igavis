@@ -2,7 +2,7 @@ import os
 import subprocess
 import numpy as np
 import multiprocessing as mp
-from src.core.plotter import Plotter
+from .plotter import Plotter
 
 # Mapping from IGB type string/ID to numpy data type
 _type_mapping = {

@@ -5,15 +5,18 @@
             "name": "Debug iga pipeline",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/main.py",
+            "module": "igavis",
             "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            },
             "args": [
                 "testing/two-layers-model24-30-heart-cell.igb",
                 // "testing/LA_RA_bilayer_with_fiber_um.vtk",
                 "/home/vgmarques/data/model-data/debug/exp906c71_short.iga.gz",
-                "--camera-config", "src/config/camera_config.json",
+                "--camera-config", "src/igavis/camera_config.json",
                 "--t-start", "0",
-                "--t-end", "-1",
+                "--t-end", "100",
                 "--np", "5",
                 "--output-path","${workspaceFolder}/anims",
                 "--plot-ps",
@@ -27,13 +30,16 @@
             "name": "Debug igb pipeline",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/main.py",
+            "module": "igavis",
             "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            },
             "args": [
                 "testing/LA_RA_bilayer_with_fiber_um.vtk",
                 "testing/vm_0.igb.gz",
                 // "--setup-camera","True",
-                "--camera-config", "src/config/camera_config.json",
+                "--camera-config", "src/igavis/camera_config.json",
                 "--camera-preset", "custom_0",
                 "--t-start", "0",
                 "--t-end", "-1",

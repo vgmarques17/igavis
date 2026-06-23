@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 import os
-import sys
 import json
 import argparse
 import pyvista as pv
 import numpy as np
 
-# Ensure root directory is in sys.path
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-
-from src.io.readers import read_anatomy
-from src.core.vtkobjects import SmoothFilters
+from .io.readers import read_anatomy
+from .core.vtkobjects import SmoothFilters
 
 def main():
     parser = argparse.ArgumentParser(

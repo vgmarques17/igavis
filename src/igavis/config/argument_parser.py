@@ -46,8 +46,8 @@ def parse_arguments():
                               help = 'Figure width in pixels. Default 1800') 
     display_group.add_argument('--fig_height','-g',action='store',type=int,default =900,
                               help = 'Figure width in pixels. Default 800') 	
-    display_group.add_argument('--camera-config',action='store',type=str,default = './cli/camera_config.json',
-                              help = ".json file with camera position, focal point, view up, and zoom")
+    display_group.add_argument('--camera-config',action='store',type=str,default = None,
+                              help = ".json file with camera position, focal point, view up, and zoom. Default uses bundled igavis/camera_config.json")
     display_group.add_argument('--camera-preset',action='store',type=str,default = 'default',
                               help = "choose the group with >=1 cameras. The cameras will be chosen in order")
     display_group.add_argument('--colormap',action='store',type=str,default = 'YlOrRd_r',

@@ -1,7 +1,7 @@
 
 import numpy as np
-from src.io.readers import load_camera_preset
-from src.core.vtkobjects import SmoothFilters
+from ..io.readers import load_camera_preset
+from .vtkobjects import SmoothFilters
 import pyvista as pv
 pv.global_theme.allow_empty_mesh = True
 

@@ -1,8 +1,8 @@
 import subprocess
-from src.io.pyigb import iga_header
+from ..io.pyigb import iga_header
 import numpy as np
 import multiprocessing as mp
-from src.core.plotter import Plotter
+from .plotter import Plotter
 
 
 def Reader(args,solid_idx,transp_idx,DataQueue):

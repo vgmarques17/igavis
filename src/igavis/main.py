@@ -1,12 +1,13 @@
 #%%
 import time
 from datetime import datetime
-import os,sys
-from config.argument_parser import parse_arguments
-from src.io.readers import read_anatomy
-from src.core.iga_pipeline import run_iga_pipeline
-from src.core.igb_pipeline import run_igb_pipeline
-import pyvista as pv
+import os
+import sys
+from .config.argument_parser import parse_arguments
+from .io.readers import read_anatomy
+from .core.iga_pipeline import run_iga_pipeline
+from .core.igb_pipeline import run_igb_pipeline
+
 #%%
 
 def main():

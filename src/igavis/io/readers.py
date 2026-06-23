@@ -1,5 +1,5 @@
 import vtk
-from src.io.pyigb import igb_read
+from .pyigb import igb_read
 from itertools import product
 import numpy as np
 import os
@@ -160,14 +160,17 @@ class IGBUnstructuredGrid:
 
         return grid
 
-def load_camera_preset(config_file: str, preset: str):
+from importlib.resources import files
+
+
+def load_camera_preset(config_file: str | None, preset: str):
     """
     Load a camera preset from the camera configuration file.
 
     Parameters
     ----------
-    config_file : str
-        Path to camera_config.json.
+    config_file : str | None
+        Path to camera_config.json. If None, use the packaged config.
     preset : str
         Name of the preset group under "presets".
 
@@ -183,6 +186,9 @@ def load_camera_preset(config_file: str, preset: str):
             }
         }
     """
+
+    if config_file is None:
+        config_file = files("igavis").joinpath("camera_config.json")
 
     with open(config_file, "r") as f:
         cfg = json.load(f)

@@ -1,18 +1,34 @@
 import ctypes
 import numpy as np
 import os
-
-# retrieve the dynamic library
-import sysconfig
-import importlib.resources
-libname = "_igbwrapper" + sysconfig.get_config_var("EXT_SUFFIX")
-# with importlib.resources.path('.',libname) as p:
-#     igblib = ctypes.CDLL(p)
 from pathlib import Path
 
-igblib = ctypes.CDLL(str(Path(__file__).parent / "igb/libigb.so"))
-
 __all__ = ["igb_read","igb_write","igb_header"]
+
+igblib = None
+
+
+def _find_igb_lib():
+    candidate = Path(__file__).parent / "igb" / "libigb.so"
+    if candidate.exists():
+        return str(candidate)
+
+    candidate = Path(__file__).resolve().parents[2] / "src" / "io" / "igb" / "libigb.so"
+    if candidate.exists():
+        return str(candidate)
+
+    raise FileNotFoundError(
+        "libigb.so not found. Build or install the IGB wrapper library under "
+        "igavis/io/igb/libigb.so or src/io/igb/libigb.so."
+    )
+
+
+def get_igblib():
+    global igblib
+    if igblib is None:
+        libpath = _find_igb_lib()
+        igblib = ctypes.CDLL(libpath)
+    return igblib
 
 _igb2numpy_type = {
         1: 'uint8',   # BYTE
@@ -64,8 +80,8 @@ class IGBFile(object):
             self.read_header()
         elif "w" in mode:
             # initialize the header structure
-            igblib.Bool_Header_Ini(ctypes.byref(self.c_bool_header))
-            igblib.Header_Ini(ctypes.byref(self.c_header))
+            get_igblib().Bool_Header_Ini(ctypes.byref(self.c_bool_header))
+            get_igblib().Header_Ini(ctypes.byref(self.c_header))
         else:
             raise RuntimeError("'r' and 'w' are only valid modes'")
 
@@ -86,7 +102,7 @@ class IGBFile(object):
 
     def read_header(self):
         c_fname = ctypes.create_string_buffer(self.fname.encode())
-        e = igblib.igb_header_read(c_fname,
+        e = get_igblib().igb_header_read(c_fname,
                 ctypes.byref(self.c_header),
                 ctypes.byref(self.c_bool_header))
         if e: raise RuntimeError
@@ -172,7 +188,7 @@ class IGBFile(object):
             raise AttributeError("'{}' not found".format(attr))
 
     def __del__(self):
-        igblib.Header_Clear(ctypes.byref(self.c_header))
+        get_igblib().Header_Clear(ctypes.byref(self.c_header))
 
 # easy-access function to read IGBFile
 def igb_read(fname,only_header=False,reshape=True):
