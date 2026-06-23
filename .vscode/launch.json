@@ -1,0 +1,49 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug iga pipeline",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "testing/two-layers-model24-30-heart-cell.igb",
+                // "testing/LA_RA_bilayer_with_fiber_um.vtk",
+                "/home/vgmarques/data/model-data/debug/exp906c71_short.iga.gz",
+                "--camera-config", "src/cli/camera_config.json",
+                "--t-start", "0",
+                "--t-end", "-1",
+                "--np", "15",
+                "--output-path","${workspaceFolder}/anims"
+            ],
+
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true
+        },
+        {
+            "name": "Debug igb pipeline",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "testing/LA_RA_bilayer_with_fiber_um.vtk",
+                "testing/vm.igb.gz",
+                // "--setup-camera","True",
+                "--camera-config", "src/cli/camera_config.json",
+                "--camera-preset", "custom_0",
+                "--t-start", "0",
+                "--t-end", "-1",
+                "--np", "15",
+                "--output-path","${workspaceFolder}/anims",
+                "--solid-val","1","2","3","4","5","6","7","8","51","52","53","54","55","56","57","58","59","60",
+                "--transp-val","11","12","13","14","15","16","17","18","60","61","62","63","64","65","66","67",
+                               "68","70","81","82","83","84","85","86","87","88","89"
+            ],
+
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true
+        }
+    ]
+}
