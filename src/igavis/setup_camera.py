@@ -6,14 +6,13 @@ import pyvista as pv
 import numpy as np
 
 from .io.readers import read_anatomy
-from .core.vtkobjects import SmoothFilters
 
 def main():
     parser = argparse.ArgumentParser(
         description="Interactive tool to configure camera presets and save them to a JSON file."
     )
     parser.add_argument(
-        "anatomy_file",
+        "anatomy",
         type=str,
         help="Path to the anatomy file (.igb or .vtk)"
     )
@@ -21,32 +20,19 @@ def main():
         "--scale",
         type=float,
         default=0.2,
-        help="Scale factor (default: 0.2)"
+        help="Scale factor for igb mesh (default: 0.2)"
     )
     parser.add_argument(
-        "--solid-val",
+        "--valid-cells",
         nargs="+",
         type=int,
-        default=[50],
-        help="Cell codes for solid layer (default: [50])"
-    )
-    parser.add_argument(
-        "--transparent-val",
-        nargs="+",
-        type=int,
-        default=[52],
-        help="Cell codes for transparent layer (default: [52])"
-    )
-    parser.add_argument(
-        "--colormap",
-        type=str,
-        default="YlOrRd_r",
-        help="Colormap for plotting (default: 'YlOrRd_r')"
+        default=[-1],
+        help="Cell codes to plot (default: all elemTag, but only if the mesh is .vtk)"
     )
     parser.add_argument(
         "--fig-width",
         type=int,
-        default=1600,
+        default=800,
         help="Figure width (default: 1600)"
     )
     parser.add_argument(
@@ -72,23 +58,15 @@ def main():
     args = parser.parse_args()
 
     # Prepare mock args dictionary for read_anatomy
-    mock_args = {
-        'scale': args.scale,
-        'solid_val': args.solid_val,
-        'transparent_val': args.transparent_val
-    }
+    args.solid_val  =args.valid_cells
 
-    if not os.path.isfile(args.anatomy_file):
-        print(f"Error: Anatomy file '{args.anatomy_file}' does not exist.")
+    if not os.path.isfile(args.anatomy):
+        print(f"Error: Anatomy file '{args.anatomy}' does not exist.")
         sys.exit(1)
 
-    print(f"Reading anatomy file '{args.anatomy_file}'...")
-    anatomy_solid = read_anatomy(mock_args, args.anatomy_file, layer='solid')
-    anatomy_transp = read_anatomy(mock_args, args.anatomy_file, layer='transparent')
+    print(f"Reading anatomy file '{args.anatomy}'...")
+    anatomy_solid = read_anatomy(args, args.anatomy, layer='solid')
 
-    print("Smoothing filters...")
-    anatomy_solid_smooth = SmoothFilters(anatomy_solid)
-    anatomy_transp_smooth = SmoothFilters(anatomy_transp)
 
     presets = {}
 
@@ -98,8 +76,7 @@ def main():
 
         # Create a pyvista Plotter
         plotter = pv.Plotter(window_size=[args.fig_width, args.fig_height], off_screen=False)
-        plotter.add_mesh(anatomy_solid_smooth, opacity=1.0, colormap=args.colormap)
-        plotter.add_mesh(anatomy_transp_smooth, opacity=0.5, colormap=args.colormap)
+        plotter.add_mesh(anatomy_solid, opacity=1.0, color='gray')
 
         # Set text instruction
         plotter.add_text(

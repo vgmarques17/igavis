@@ -1,10 +1,47 @@
 
 import numpy as np
 from ..io.readers import load_camera_preset
-from .vtkobjects import SmoothFilters
 import pyvista as pv
 pv.global_theme.allow_empty_mesh = True
 pv.OFF_SCREEN=True
+
+def SmoothFilters(input_object,iterations = 10, relax_factor = 0.5):
+
+    # If the input_object has a custom "vtkOriginalPointIds" (meaning it was extracted/sub-sampled),
+    # rename it so it doesn't get overwritten by extract_surface.
+    has_original_ids = "vtkOriginalPointIds" in input_object.point_data
+    if has_original_ids:
+        input_object.point_data["vtkOriginalPointIds_original"] = input_object.point_data["vtkOriginalPointIds"]
+
+    # Convert everything to PyVista PolyData surface
+    surf = pv.wrap(input_object).extract_surface(algorithm='dataset_surface',pass_cellid=True, pass_pointid=True)
+
+    # Smooth (equivalent to vtkSmoothPolyDataFilter)
+    surf = surf.smooth(
+        n_iter=iterations,
+        relaxation_factor=relax_factor,
+        feature_smoothing=False,
+        boundary_smoothing=True,
+    )
+
+    # Compute normals (equivalent to vtkPolyDataNormals)
+    surf = surf.compute_normals(
+        point_normals=True,
+        cell_normals=True,
+        auto_orient_normals=False,
+        consistent_normals=True,
+    )
+
+    # If we saved the original IDs, map the surface's vtkOriginalPointIds back to the original mesh points
+    if has_original_ids:
+        surf.point_data["vtkOriginalPointIds"] = surf.point_data["vtkOriginalPointIds_original"][surf.point_data["vtkOriginalPointIds"]]
+        # Clean up the temporary array
+        del surf.point_data["vtkOriginalPointIds_original"]
+        # Also clean up from input_object to avoid polluting it
+        del input_object.point_data["vtkOriginalPointIds_original"]
+
+    return surf
+
 
 def Plotter(args,anatomy_solid,anatomy_transp,ps_array,BTpos,DataQueue):
     print('Worker Initialized')
@@ -12,44 +49,44 @@ def Plotter(args,anatomy_solid,anatomy_transp,ps_array,BTpos,DataQueue):
     # Initialize array for solid and transparent layers
     ## Endo
     solid_idx = anatomy_solid.points
-    solid_idx = np.rint(solid_idx/args['scale']).astype('int') # Redundant
+    solid_idx = np.rint(solid_idx/args.scale).astype('int') # Redundant
 
     anatomy_solid.point_data['vmf'] = np.ones(solid_idx.shape[0],dtype='float32')*-80
     # EndoObject = anatomy_solid.VTKObject
 
     ## Epi
     transp_idx = anatomy_transp.points
-    transp_idx = np.rint(transp_idx/args['scale']).astype('int') # Redundant
+    transp_idx = np.rint(transp_idx/args.scale).astype('int') # Redundant
 
     anatomy_transp.point_data['vmf'] = np.ones(transp_idx.shape[0],dtype='float32')*-80
     # EpiObject = anatomy_transp.VTKObject
 
     # Create filters
-    if args['anatomy_ext']=='.igb':
+    if args.anatomy_ext=='.igb':
         anatomy_solid = SmoothFilters(anatomy_solid)
         anatomy_transp = SmoothFilters(anatomy_transp)
 
     # Make a pyvista Plotter (subfunction, put in vtkobjects)
-    if args['window_type'] == "side-by-side":
+    if args.window_type == "side-by-side":
             layout = (1, 2)
-    elif args['window_type'] == "vertical":
+    elif args.window_type == "vertical":
         layout = (2, 1)
     else:
         layout = (1, 1)
     
-    plotter = pv.Plotter(shape=layout, window_size=[args['fig_width'], args['fig_height']],off_screen=True)
+    plotter = pv.Plotter(shape=layout, window_size=[args.fig_width, args.fig_height],off_screen=True)
 
     # Load cameras
-    cams = load_camera_preset(args['camera_config'],
-                              args['camera_preset'])
+    cams = load_camera_preset(args.camera_config,
+                              args.camera_preset)
     cam_names = list(cams.keys())
     # colorbar
     sargs = dict(height=0.25, vertical=True, position_x=0.9, position_y=0.05)
     # --- View 1 ---
     plotter.subplot(0, 0)
-    mesh_solid_1 = plotter.add_mesh(anatomy_solid , opacity=1.0, scalars="vmf", show_scalar_bar = layout==(1,1),colormap=args['colormap'],clim=(-80,20)) #only add scalar bar if only one view
-    mesh_transp_1 = plotter.add_mesh(anatomy_transp, opacity=0.5, scalars="vmf", show_scalar_bar = layout==(1,1),colormap=args['colormap'],clim=(-80,20))
-    text_actor = plotter.add_text(f"{args['initial_stamp']} ms",font_size=14) #FIXME: tStep
+    mesh_solid_1 = plotter.add_mesh(anatomy_solid , opacity=1.0, scalars="vmf", show_scalar_bar = layout==(1,1),colormap=args.colormap,clim=(-80,20)) #only add scalar bar if only one view
+    mesh_transp_1 = plotter.add_mesh(anatomy_transp, opacity=args.transp_opacity, scalars="vmf", show_scalar_bar = layout==(1,1),colormap=args.colormap,clim=(-80,20))
+    text_actor = plotter.add_text(f"{args.initial_stamp} ms",font_size=14) #FIXME: tStep
 
     #Set camera
     plotter.camera_position = [cams[cam_names[0]]["position"],
@@ -62,8 +99,8 @@ def Plotter(args,anatomy_solid,anatomy_transp,ps_array,BTpos,DataQueue):
     if layout != (1, 1):
         plotter.subplot(layout[0]-1, layout[1]-1)
 
-        mesh_solid_2 = plotter.add_mesh(anatomy_solid , opacity=1.0, scalars="vmf", show_scalar_bar=True,scalar_bar_args=sargs,colormap=args['colormap'],clim=(-80,20))
-        mesh_transp_2 = plotter.add_mesh(anatomy_transp, opacity=0.5, scalars="vmf", show_scalar_bar=True,scalar_bar_args=sargs,colormap=args['colormap'],clim=(-80,20))
+        mesh_solid_2 = plotter.add_mesh(anatomy_solid , opacity=1.0, scalars="vmf", show_scalar_bar=True,scalar_bar_args=sargs,colormap=args.colormap,clim=(-80,20))
+        mesh_transp_2 = plotter.add_mesh(anatomy_transp, opacity=0.5, scalars="vmf", show_scalar_bar=True,scalar_bar_args=sargs,colormap=args.colormap,clim=(-80,20))
         # Set camera
         plotter.camera_position = [cams[cam_names[1]]["position"],
                                    cams[cam_names[1]]["focal_point"],
@@ -72,8 +109,8 @@ def Plotter(args,anatomy_solid,anatomy_transp,ps_array,BTpos,DataQueue):
 
     plotter.subplot(0, 0)
 
-    if args['plot_ps']:
-        plotter,actors_to_remove = update_ps_plot(args,args['t_start'],ps_array,layout,plotter)
+    if args.plot_ps:
+        plotter,actors_to_remove = update_ps_plot(args,args.t_start,ps_array,layout,plotter)
 
     # if args.plot_bt:
     #     if args.t_start in BTpos.keys():
@@ -88,6 +125,7 @@ def Plotter(args,anatomy_solid,anatomy_transp,ps_array,BTpos,DataQueue):
     #     PosRen.Modified()
     #     AntRen.Modified()     
     #     if args.plot_rv: RenRV.Modified()
+    
     while True:
 
         QOut = DataQueue.get(True)
@@ -99,10 +137,10 @@ def Plotter(args,anatomy_solid,anatomy_transp,ps_array,BTpos,DataQueue):
 
         elif message == "data":
             t, solid_vals, transp_vals = data
-            t_step = args['t_start'] + t * args['t_int']
+            t_step = args.t_start + t * args.t_int
 
             # ---- UPDATE DATA ARRAYS ----
-            if args['anatomy_ext']=='.igb':
+            if args.anatomy_ext=='.igb':
                 anatomy_solid["vmf"] = solid_vals[anatomy_solid.point_data["vtkOriginalPointIds"]]
                 anatomy_transp["vmf"] = transp_vals[anatomy_transp.point_data["vtkOriginalPointIds"]]
             else:
@@ -113,7 +151,7 @@ def Plotter(args,anatomy_solid,anatomy_transp,ps_array,BTpos,DataQueue):
             plotter.remove_actor(text_actor)
             text_actor = plotter.add_text(f"{t_step:04d} ms", font_size=14)
             # ---- UPDATE PS Array ----
-            if args['plot_ps']:
+            if args.plot_ps:
                 plotter,actors_to_remove = update_ps_plot(args,t_step,ps_array,layout,plotter,actors_to_remove = actors_to_remove)
 
             # ---- TRIGGER RENDER ----
@@ -121,7 +159,7 @@ def Plotter(args,anatomy_solid,anatomy_transp,ps_array,BTpos,DataQueue):
 
             # ---- SCREENSHOT ----
             plotter.screenshot(
-                f"{args['output_path']}/{args['basename']}{t_step:05d}.png"
+                f"{args.output_path}/{args.basename}{t_step:05d}.png"
             )
 
 
@@ -138,11 +176,11 @@ def update_ps_plot(args,t,ps_array,layout,plotter,actors_to_remove=None):
         ps_points = pv.PolyData(np.empty((0,3)))
     
     # Add PS to plotters
-    mesh_ps_1 = plotter.add_mesh(ps_points , opacity=1.0,colormap=args['sphere_color'],render_points_as_spheres=True,point_size=args['sphere_radius']) 
+    mesh_ps_1 = plotter.add_mesh(ps_points , opacity=1.0,colormap=args.sphere_color,render_points_as_spheres=True,point_size=args.sphere_radius) 
     actors = [mesh_ps_1]
     if layout != (1, 1):
         plotter.subplot(layout[0]-1, layout[1]-1)
-        mesh_ps_2 = plotter.add_mesh(ps_points , opacity=1.0,colormap=args['sphere_color'],render_points_as_spheres=True,point_size=args['sphere_radius']) 
+        mesh_ps_2 = plotter.add_mesh(ps_points , opacity=1.0,colormap=args.sphere_color,render_points_as_spheres=True,point_size=args.sphere_radius) 
         plotter.subplot(0, 0)
         actors = actors + [mesh_ps_2]
 

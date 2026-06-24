@@ -17,13 +17,13 @@ def read_anatomy(args,anatomy_file,layer='solid'):
     file_extension = os.path.splitext(anatomy_file)[1]
     if file_extension == '.igb':
         if layer == 'solid':
-            valid_cells = args['solid_val']
+            valid_cells = args.solid_val
         elif layer == 'transparent':
-            valid_cells = args['transp_val']
+            valid_cells = args.transp_val
         else:
             RuntimeError('Invalid layer name')
             
-        grid = IGBUnstructuredGrid(anatomy_file,valid_cells=valid_cells,units=args['scale'])
+        grid = IGBUnstructuredGrid(anatomy_file,valid_cells=valid_cells,units=args.scale)
         vtk_grid = grid.to_vtkUnstructuredGrid() 
         vtk_grid = pv.UnstructuredGrid(vtk_grid)
         # vtk_grid = dsa.WrapDataObject(vtk_grid)
@@ -35,13 +35,16 @@ def read_anatomy(args,anatomy_file,layer='solid'):
         vtk_grid = pv.UnstructuredGrid(anatomy_file)
         
         if layer == 'solid':
-            valid_cells = args['solid_val']
+            valid_cells = args.solid_val
         elif layer == 'transparent':
-            valid_cells = args['transp_val']
+            valid_cells = args.transp_val
         else:
             raise RuntimeError('Invalid layer name')
             
         tag_name = 'elemTag'
+        if valid_cells==[-1]:
+            #Pick all elem tags
+            valid_cells = np.unique(vtk_grid.cell_data[tag_name])
         vtk_grid = vtk_grid.extract_cells(np.isin(vtk_grid.cell_data[tag_name],valid_cells),pass_cell_ids=True, pass_point_ids=True)
         
         return vtk_grid

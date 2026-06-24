@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourname/igavis"
+Homepage = "https://github.com/vgmarques17/igavis"
 
 [project.scripts]
 igavis = "igavis.main:main"

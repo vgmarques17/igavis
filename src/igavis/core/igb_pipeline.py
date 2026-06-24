@@ -42,10 +42,10 @@ def parse_igb_header_from_bytes(buf):
 
 def Reader(args, solid_idx,transp_idx,DataQueue):
     print('Reader initialized')
-    fname_signals = args['data-file']
-    t_start = args['t_start']
-    t_end   = args['t_end']
-    t_int   = args['t_int']
+    fname_signals = args.data
+    t_start = args.t_start
+    t_end   = args.t_end
+    t_int   = args.t_int
 
     # Open the file stream (supporting gzip and uncompressed)
     proc = None
@@ -116,7 +116,7 @@ def Reader(args, solid_idx,transp_idx,DataQueue):
             f.close()
 
     # Send kill message to all workers
-    for _ in range(args['n_processes']):
+    for _ in range(args.n_processes):
         DataQueue.put(('kill', None))
 
 def run_igb_pipeline(args, anatomy_solid, anatomy_transp):
@@ -124,9 +124,9 @@ def run_igb_pipeline(args, anatomy_solid, anatomy_transp):
     solid_idx = anatomy_solid.point_data['vtkOriginalPointIds']
     transp_idx = anatomy_transp.point_data['vtkOriginalPointIds']
 
-    if args['plot_ps']:
+    if args.plot_ps:
         # Read file
-        with open(args['ps_file'],'r') as fi:
+        with open(args.ps_file,'r') as fi:
             rows = fi.readlines()
             rows = rows[2:]
 
@@ -156,7 +156,7 @@ def run_igb_pipeline(args, anatomy_solid, anatomy_transp):
         # Data In
         DataReader = mp.Process(target=Reader, args=(args,solid_idx,transp_idx, DataQueue,))
         # Plotting
-        PlottingPool = mp.Pool(args['n_processes'], Plotter, (args, anatomy_solid, anatomy_transp, ps_array, None, DataQueue,))
+        PlottingPool = mp.Pool(args.n_processes, Plotter, (args, anatomy_solid, anatomy_transp, ps_array, None, DataQueue,))
 
         # Open and wait for end 
         DataReader.start()

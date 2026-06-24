@@ -40,7 +40,7 @@
                 "testing/vm_0.igb.gz",
                 // "--setup-camera","True",
                 "--camera-config", "src/igavis/camera_config.json",
-                "--camera-preset", "custom_0",
+                "--camera-preset", "default_vtk",
                 "--t-start", "0",
                 "--t-end", "-1",
                 "--np", "15",
@@ -50,6 +50,24 @@
                                "68","70","81","82","83","84","85","86","87","88","89",
                 "--plot-ps",
                 "--ps-file","testing/phase_sing_0.pts_t",
+            ],
+
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true
+        },
+        {
+            "name": "Debug camera setup",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "igavis.setup_camera",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            },
+            "args": [
+                "testing/LA_RA_bilayer_with_fiber_um.vtk",
+                "--valid-cells","-1",
+                "--preset-name","test_again"
             ],
 
             "cwd": "${workspaceFolder}",

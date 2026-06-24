@@ -1,62 +1,104 @@
 # IGAVis
-Visualization tool for rendering videos of simulations off screen.
 
-This software is based on the a "legacy" version of my plotting tool for making videos for propag simulations. There, I had to be very efficient to read and plot the massive iga files. I extended the same logic now to work with the openCARP formats
+## Introduction
 
-This repository contains:
+IGAVis is a Python visualization tool for rendering simulation data off-screen. It supports anatomy meshes in `.igb` or `.vtk` format together with time series data in `.iga` or `.igb` format, and can generate image sequences suitable for video creation.
 
-- igavis: the main software, able to render transparent and solid meshes in a layout of one or two subplots
+### Some nice features:
+- You don't need to make meshalyzer work offscreen
+- You can set the camera in Paraview and save its configuration in an easy to read .json file
+    - You can also use the helper function provided here
+- You can plot different layers with different opacities (endocardial solid and epicardial transparent, for example)
+- You can plot and control the appearance of phase singularity points (in the formats for igb meshes and `.pts_t`)
 
- meshes stored in .igb format or reading from .igb data
+### Some background
+This software is a new implementation of the code I used to generate videos from the massive `.iga` files that came out of `propag` (hence the name). Because of that, it is implemented to read the data as fast as possible while the other processes plot the .png files. 
 
-## Setup
+I have now adapted it to work similarly with the typical openCARP output, namely data as `.igb` files and PS tracking, as well as other auxiliary mesh data, as `pts_t`
 
-From the repository root, run the setup script to create the virtual environment, install dependencies, install the package in editable mode, and build the IGB helper library:
+## What is in this repository
+
+- `src/igavis/main.py` — application launcher and pipeline selector
+- `src/igavis/setup_camera.py` — Helper script to create custom cameras. Does not work headless
+- `src/igavis/camera_config.json` — default camera configuration
+- `setup_venv.sh` — helper script to create the virtual environment and install dependencies
+- `setup_venv.sh` — helper script to create the virtual environment and install dependencies
+- `launch.json` — Gives examples of how to run the different scripts and can be used for VSCode debug 
+
+## Requirements and setup
+
+This package relies on VTK and PyVista for plotting, and needs gcc for compiling a helper library for IGB support. 
+
+From the repository root, use the setup script to create a virtual environment and install the package:
 
 ```bash
 ./setup_venv.sh
 ```
 
-If `gcc` is not available, the script will still create the environment and install the package, but building `libigb.so` will be skipped. Install `gcc` and rerun the script to build the helper library.
+If `gcc` is present, the script also builds the native IGB helper library. 
 
-## Build the IGB helper library manually
+### Manual IGB helper library build
 
-The native IGB helper library must be built before using the package.
-
-From the repository root:
+If you need to build the IGB helper library manually:
 
 ```bash
 cd src/igavis/io/igb
 gcc -fPIC -shared -o libigb.so header.c igbwrapper.c
 ```
 
-This creates `src/igavis/io/igb/libigb.so` and allows `igavis` to load IGB files.
+This produces `src/igavis/io/igb/libigb.so` and enables IGB file loading.
 
-## Running the app
+## How to run
 
-Install the package in editable mode:
+Run the package with Python from the repo root.
+
+### Using the installed entrypoint
 
 ```bash
-python -m igavis --help
+python -m igavis <anatomy-file> <data-file> [options]
+```
 
-# You may need to unset the pythonpath to avoid conflicting library versions
-# You may also need an X server on a HPC platform
-export DISPLAY=:0
-# killall Xvfb
-Xvfb :0 -screen 0 1600x1200x24 &
+### Example command
 
-igavis ...
+Check `launch.json` for examples of both pipelines
+
+
+### Common options
+
+- `--output-path`, `-o` — output folder for generated images
+- `--camera-config` — JSON file with camera settings. I provide a default one but this can be adjusted
+- `--t-start`, `--t-end`, `--t-int` — frame range and sampling interval
+- `--plot-ps` — enable phase singularity plotting
+- `--ps-file` — phase singularity data file path
+- `--np` — number of parallel processes for image generation
+
+## Troubleshoot
+
+- If display errors occur on headless systems, ensure an X server is available and `DISPLAY` is set:
+```bash
+Xvfb :99 -screen 0 1024x768x24 >/dev/null 2>&1 & # or whatever display number instead of 99
+export DISPLAY=:99
+
+python ...
 
 killall Xvfb
 ```
 
-Then run the visualization with your anatomy and data files:
+- Use `.igb` anatomy with `.iga` data, or `.vtk` anatomy with `.igb` data.
+-
+- If dependency issues appear, confirm the virtual environment is activated and dependencies from `requirements.txt` are installed.
 
-```bash
-PYTHONPATH=src /home/vgmarques/Documents/Code/igavis/igavis_env/bin/python -m igavis testing/two-layers-model24-30-heart-cell.igb /home/vgmarques/data/model-data/debug/exp906c71_short.iga.gz --camera-config src/igavis/camera_config.json --t-start 0 --t-end 100 --np 5 --output-path ./anims --plot-ps --ps-file testing/exp906c71_fake_ps.txt
-```
+## To-do
 
-## Create video from output images
+- Adjust the readers to take .pts/.elem meshes (aka carp_txt)
+- Breakthrough plots
+- Transparent mesh is always plotted
+
+
+
+## Video creation
+
+After image frames are generated, use `ffmpeg` to assemble them into a video:
 
 ```bash
 ffmpeg -framerate 30 -pattern_type glob -i 'vm*.png' -c:v libx264 -pix_fmt yuv420p output.mp4

@@ -19,23 +19,26 @@ def parse_arguments():
 
 
     # Required arguments
-    parser.add_argument('anatomy-file',action='store',type=str,
+    parser.add_argument('anatomy',action='store',type=str,
                         help = 'File containing the anatomy. Can be .igb (for propag meshes) or openCARP formats')
 
-    parser.add_argument('data-file',action='store',type=str,
+    parser.add_argument('data',action='store',type=str,
                         help = 'Name of the experiment file. Can be iga (if the mesh is in igb) or igb (for openCARP meshes). ')
 
     # # Optional Arguments
     # Mesh arguments
     mesh_group.add_argument('--scale',
                               action='store',default =0.2,type=float,
-                              help = 'Scale factor. Default 0.2')
+                              help = 'Scale factor for igb mesh. Default 0.2')
     mesh_group.add_argument('--solid-val',
                              action='store',nargs='+',type=int,default =[50],
-                             help = 'Cell codes to be plotted solid (not transparent). Default [50]')
+                             help = 'Cell codes (elemTag) to be plotted solid (not transparent). Default [50]. For vtk meshes, [-1] adds all cells')
     mesh_group.add_argument('--transp-val',
                              action='store',nargs='+',type=int,default =[52],
-                             help = 'Cell codes to be plotted transparent. Default [52]')
+                             help = 'Cell codes (elemTag) to be plotted transparent. Default [50]. For vtk meshes, [-1] adds all cells')
+    mesh_group.add_argument('--transp-opacity',
+                             action='store',type=float,default =0.5,
+                             help = 'Opacity of the transparent mesh. Default 0.5')
     
     # Display arguments
     display_group.add_argument('--window-type',
@@ -48,7 +51,7 @@ def parse_arguments():
                               help = 'Figure width in pixels. Default 800') 	
     display_group.add_argument('--camera-config',action='store',type=str,default = None,
                               help = ".json file with camera position, focal point, view up, and zoom. Default uses bundled igavis/camera_config.json")
-    display_group.add_argument('--camera-preset',action='store',type=str,default = 'default',
+    display_group.add_argument('--camera-preset',action='store',type=str,default = 'default_vtk',
                               help = "choose the group with 1 or 2 cameras, matching your layout. The cameras will be chosen in order")
     display_group.add_argument('--colormap',action='store',type=str,default = 'YlOrRd_r',
                               help = "Matplotlib colormap for plotting")
