@@ -49,7 +49,7 @@ def parse_arguments():
     display_group.add_argument('--camera-config',action='store',type=str,default = None,
                               help = ".json file with camera position, focal point, view up, and zoom. Default uses bundled igavis/camera_config.json")
     display_group.add_argument('--camera-preset',action='store',type=str,default = 'default',
-                              help = "choose the group with >=1 cameras. The cameras will be chosen in order")
+                              help = "choose the group with 1 or 2 cameras, matching your layout. The cameras will be chosen in order")
     display_group.add_argument('--colormap',action='store',type=str,default = 'YlOrRd_r',
                               help = "Matplotlib colormap for plotting")
 
@@ -72,7 +72,7 @@ def parse_arguments():
                             action='store',default = '%s/anims'%(os.getcwd()),type=str,
                             help = 'Path to the output folder. Default \'./anims\'')
     # # ------------------------------------------------------------------------------
-    ## PS related (currently only igb/iga)
+    ## PS related
     ps_group.add_argument('--plot-ps',action='store_true',
                           help = 'Whether to plot the PS\'s')
     ps_group.add_argument('--ps-file',type=str,

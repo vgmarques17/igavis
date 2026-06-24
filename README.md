@@ -1,5 +1,13 @@
-# igavis
-Visualization tool for meshes stored in .igb format or reading from .igb data
+# IGAVis
+Visualization tool for rendering videos of simulations off screen.
+
+This software is based on the a "legacy" version of my plotting tool for making videos for propag simulations. There, I had to be very efficient to read and plot the massive iga files. I extended the same logic now to work with the openCARP formats
+
+This repository contains:
+
+- igavis: the main software, able to render transparent and solid meshes in a layout of one or two subplots
+
+ meshes stored in .igb format or reading from .igb data
 
 ## Setup
 
@@ -29,8 +37,17 @@ This creates `src/igavis/io/igb/libigb.so` and allows `igavis` to load IGB files
 Install the package in editable mode:
 
 ```bash
-cd /home/vgmarques/Documents/Code/igavis
-PYTHONPATH=src /home/vgmarques/Documents/Code/igavis/igavis_env/bin/python -m igavis --help
+python -m igavis --help
+
+# You may need to unset the pythonpath to avoid conflicting library versions
+# You may also need an X server on a HPC platform
+export DISPLAY=:0
+# killall Xvfb
+Xvfb :0 -screen 0 1600x1200x24 &
+
+igavis ...
+
+killall Xvfb
 ```
 
 Then run the visualization with your anatomy and data files:

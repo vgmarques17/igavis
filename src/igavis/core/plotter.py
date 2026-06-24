@@ -4,7 +4,7 @@ from ..io.readers import load_camera_preset
 from .vtkobjects import SmoothFilters
 import pyvista as pv
 pv.global_theme.allow_empty_mesh = True
-
+pv.OFF_SCREEN=True
 
 def Plotter(args,anatomy_solid,anatomy_transp,ps_array,BTpos,DataQueue):
     print('Worker Initialized')
@@ -71,9 +71,6 @@ def Plotter(args,anatomy_solid,anatomy_transp,ps_array,BTpos,DataQueue):
         plotter.camera.zoom(cams[cam_names[1]]["zoom"])
 
     plotter.subplot(0, 0)
-    # plotter.show(auto_close=False, interactive=False)
-    # plotter.show()
-
 
     if args['plot_ps']:
         plotter,actors_to_remove = update_ps_plot(args,args['t_start'],ps_array,layout,plotter)

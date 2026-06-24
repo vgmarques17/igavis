@@ -149,7 +149,7 @@ def run_igb_pipeline(args, anatomy_solid, anatomy_transp):
         ps_array = np.asarray(data,float)
     else:
         ps_array = None
-
+    # Plotter(args,anatomy_solid,anatomy_transp,ps_array,None,None)
     with mp.Manager() as DataManager:
         DataQueue = DataManager.Queue(maxsize=5)
         
