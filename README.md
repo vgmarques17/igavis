@@ -102,4 +102,5 @@ After image frames are generated, use `ffmpeg` to assemble them into a video:
 
 ```bash
 ffmpeg -framerate 30 -pattern_type glob -i 'vm*.png' -c:v libx264 -pix_fmt yuv420p output.mp4
+ffmpeg -framerate 25 -pattern_type glob -i 'vm*.png' -c:v libx264 -crf 14 output.mp4
 ```
