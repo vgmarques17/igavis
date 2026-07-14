@@ -125,31 +125,54 @@ def run_igb_pipeline(args, anatomy_solid, anatomy_transp):
     transp_idx = anatomy_transp.point_data['vtkOriginalPointIds']
 
     if args.plot_ps:
-        # Read file
-        with open(args.ps_file,'r') as fi:
-            rows = fi.readlines()
-            rows = rows[2:]
+        # Check file extension. Either .pts_t or .pstracker
+        if args.ps_file.endswith('.pts_t'):
+            # Read file
+            with open(args.ps_file,'r') as fi:
+                rows = fi.readlines()
+                rows = rows[2:]
 
-        data = []
-        new_tstep=False
-        for row in rows:
-            if new_tstep:
-                new_tstep=False
-                continue
-            
-            if row.startswith('#'):
-                # That is a timestep
-                t = row.split('#')[-1].split()[0]
-                t = float(t)
-                new_tstep=True
-                continue
-            else:
-                x,y,z = row.split('#')[0].split()
+            data = []
+            new_tstep=False
+            for row in rows:
+                if new_tstep:
+                    new_tstep=False
+                    continue
+                
+                if row.startswith('#'):
+                    # That is a timestep
+                    t = row.split('#')[-1].split()[0]
+                    t = float(t)
+                    new_tstep=True
+                    continue
+                else:
+                    x,y,z = row.split('#')[0].split()
+                    data.append([t,x,y,z])
+            ps_array = np.asarray(data,float)
+        elif args.ps_file.endswith('.pstracker'):
+            with open(args.ps_file,'r') as fi:
+                rows = fi.readlines()
+                rows = rows[1:]
+
+            data = []
+            for row in rows:
+                t,x,y,z,_ = row.split(',')
                 data.append([t,x,y,z])
-        ps_array = np.asarray(data,float)
+            ps_array = np.asarray(data,float)
+
+            # Plot only centers
+            # data_centers = []
+            # for traj in np.unique(ps_array_tmp[:,-1]):
+            #     traj_data = ps_array_tmp[ps_array_tmp[:,-1]==traj]
+            #     traj_out = np.array([[t,
+            #                           np.mean(traj_data[traj_data[:,0]==t,1]),
+            #                           np.mean(traj_data[traj_data[:,0]==t,2]),
+            #                           np.mean(traj_data[traj_data[:,0]==t,3])] for t in np.unique(traj_data[:,0])])
+            #     for row in traj_out: data_centers.append(row)
+            # ps_array = np.asarray(data_centers,float)
+
     else:
-        ps_array = None
-    # Plotter(args,anatomy_solid,anatomy_transp,ps_array,None,None)
+        ps_array = None    # Plotter(args,anatomy_solid,anatomy_transp,ps_array,None,None)
     with mp.Manager() as DataManager:
         DataQueue = DataManager.Queue(maxsize=5)
         
